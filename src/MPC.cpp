@@ -6,7 +6,7 @@ using CppAD::AD;
 
 size_t N = 10;
 double dt = 0.1;
-double ref_v = 40;
+double ref_v = 35;
 
 size_t x_start = 0;
 size_t y_start = x_start + N;
@@ -151,8 +151,8 @@ vector<double> MPC::Solve(Eigen::VectorXd state, Eigen::VectorXd coeffs) {
   Dvector vars_lowerbound(n_vars);
   Dvector vars_upperbound(n_vars);
   // x, y
-  setBounds(vars_lowerbound, vars_upperbound, x_start, y_start, -100, 100);
-  setBounds(vars_lowerbound, vars_upperbound, y_start, psi_start, -100, 100);
+  setBounds(vars_lowerbound, vars_upperbound, x_start, y_start, -1000, 1000);
+  setBounds(vars_lowerbound, vars_upperbound, y_start, psi_start, -1000, 1000);
   // psi: [-2*PI, 2*PI]
   setBounds(vars_lowerbound, vars_upperbound, psi_start, v_start, -6.4, 6.4);
   // velocity
@@ -215,9 +215,9 @@ vector<double> MPC::Solve(Eigen::VectorXd state, Eigen::VectorXd coeffs) {
 
   // Cost
   auto cost = solution.obj_value;
-  std::cout << "Cost " << cost << std::endl;
+  std::cout << "Cost " << cost << " (" << ok << ")" << std::endl;
 
-  // TODO: Return the first actuator values. The variables can be accessed with
+  // Return the first actuator values. The variables can be accessed with
   // `solution.x[i]`.
   //
   // {...} is shorthand for creating a vector, so auto x1 = {1.0,2.0}

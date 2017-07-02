@@ -16,17 +16,6 @@ double deg2rad(double x) { return x * pi() / 180; }
 
 double rad2deg(double x) { return x * 180 / pi(); }
 
-double normalizeAngle(double angle) {
-  double v = angle;
-  while (v > M_PI) {
-    v -= 2 * M_PI;
-  }
-  while (v < -M_PI) {
-    v += 2 * M_PI;
-  }
-  return v;
-}
-
 /**
  * Convert the map coordinates (world_x, world_y) into car coordinates,
  * when the car is at (car_x, car_y) in the map, and its orientation is psi
@@ -112,7 +101,7 @@ int main() {
           vector<double> ptsy = j[1]["ptsy"];
           double px = j[1]["x"];
           double py = j[1]["y"];
-          double psi = normalizeAngle(j[1]["psi"]);
+          double psi = j[1]["psi"];
           double v = j[1]["speed"];
           double delta = j[1]["steering_angle"];
           double alpha = j[1]["throttle"];
@@ -145,7 +134,7 @@ int main() {
           // Predict future state with kinematic model and latency
           double px_t1 = v * latency;
           double py_t1 = 0.0;
-          double psi_t1 = normalizeAngle((v / 2.67) * (-delta) * latency);
+          double psi_t1 = (v / 2.67) * (-delta) * latency;
           double v_t1 = v + alpha * latency;
           double cte_t1 = cte + v * sin(epsi) * latency;
           double epsi_t1 = epsi + psi_t1;
