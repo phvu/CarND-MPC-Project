@@ -1,6 +1,90 @@
 # CarND-Controls-MPC
 Self-Driving Car Engineer Nanodegree Program
 
+## Project Rubic
+
+### Compilation
+
+The project can be compiled and executed with:
+
+```bash
+mkdir -p build && cd build && cmake .. && make
+./mpc
+```
+
+### Implementation
+
+#### The Model
+
+The model is a vector with 6 elements: `x, y, psi, v, cte, epsi`, which are the x coordinate, y coordinate, orientation,
+velocity, cross-tract error and the orientation error of the vehicle.
+
+In this project, I used the x and y coordinates in the car's coordinate system, with the x axis points in the 
+direction where the car is heading to, and the y axis points to the left.
+
+The actuators include the _steering angle_ `delta` and _acceleration_ `alpha`. At time `t`, given the actuators,
+the new model vector can be updated using the following equations:
+
+```
+x[t] = x[t-1] + v[t-1] * cos(psi[t-1]) * dt
+y[t] = y[t-1] + v[t-1] * sin(psi[t-1]) * dt
+psi[t] = psi[t-1] + v[t-1] / Lf * delta[t-1] * dt
+v[t] = v[t-1] + a[t-1] * dt
+cte[t] = f(x[t-1]) - y[t-1] + v[t-1] * sin(epsi[t-1]) * dt
+epsi[t] = psi[t] - psides[t-1] + v[t-1] * delta[t-1] / Lf * dt
+```
+
+Where:
+
+- `dt` is the interval between consecutive time-steps `t-1` and `t`
+- `Lf` is the distance between the front of the vehicle and its center of gravity
+- `f(x)` is the motion model, normally is a fitted 3rd-order polynomial.
+- `psides` is the desired orientation, computed as `arctan(f'(x_t))`
+
+This model is used in `MPC.cpp:72:110` to set up the objective function to be optimized.
+
+#### Timestep Length and Elapsed Duration
+
+The timestep length is chosen as `N=10`. This is the number of steps to predict ahead in the future.
+Larger values of `N` will lead to more complicated optimization problem because the objective function 
+and constraints have to take into account more terms (and increase computation time), also our model is 
+not perfect and will likely degrade if we look too far ahead.
+Smaller values of `N` may be insufficient to model difficult scenario. I tried to set `N` between 8 and 20,
+and `10` turns out to be more stable.
+
+The Elapsed duration `dt` measures the duration between consecutive timesteps. Since the car is modelled with 
+a delay of 0.1 seconds, I chose `dt=0.1` for convenience. When `dt < 0.1` and I take the first actuator, the car
+tend to drive backward. Larger value of `dt` might create bigger mistake and the car might not be able to recover.
+
+#### Polynomial Fitting and MPC Preprocessing
+
+The waypoints are first converted into the car's coordinate system, then fitted with a 3rd-order polynomial. This is 
+done between lines `124-134` of `main.cpp`.
+
+#### Model Predictive Control with Latency
+
+Since we have a control latency of `0.1 second`, we need to predict the state of the car at 0.1 second after the 
+_current_ moment. This is done using the update equations above (with `x=y=psi=0, dt=0.1`), 
+and implemented between lines `139-151` of `main.cpp`.
+
+This step is crucial in order to make the algorithm works. We then feed this state vector into MPC optimization algorithm.
+
+The optimization will give an _optimial_ estimation for the actuators `delta` and `alpha` for `N-1` timesteps ahead.
+The final actuators are chosen to be the average of the first 3 estimated values. This is to make sure we have 
+a stable and smooth actuation. It is implemented between lines `225-233` of `MPC.cpp`.
+
+The objective function turned out to be quite tricky. I tried to throw in some of my ideas (the steeper the car
+is turning, the slower it should go, penalizing the desired velocity if the car is turning steep, etc...) but those
+lead to unstable scenarios.
+
+I tried to put stricter constrained on the variables. This is done on lines `154-167` of `MPC.cpp`. Among those constraints,
+probably only constraints on the _steering angle_ and the _acceleration_ are crucial. Contraints on the `x` and `y` coordinates
+are a bit superficial and probably only apply on the simulator (and shouldn't be that strict in practice).
+
+### Simulation
+
+The algorithm can be executed with `./mpc`
+
 ---
 
 ## Dependencies
