@@ -42,9 +42,6 @@ public:
     fg[0] = 0;
 
     // Cost function
-    // TODO: Define the cost related the reference state and
-    // any anything you think may be beneficial.
-
     // The part of the cost based on the reference state.
     for (int t = 0; t < N; t++) {
       fg[0] += 10 * CppAD::pow(vars[cte_start + t], 2);
