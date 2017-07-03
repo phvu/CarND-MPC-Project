@@ -70,8 +70,7 @@ and implemented between lines `139-151` of `main.cpp`.
 This step is crucial in order to make the algorithm works. We then feed this state vector into MPC optimization algorithm.
 
 The optimization will give an _optimial_ estimation for the actuators `delta` and `alpha` for `N-1` timesteps ahead.
-The final actuators are chosen to be the average of the first 3 estimated values. This is to make sure we have 
-a stable and smooth actuation. It is implemented between lines `225-233` of `MPC.cpp`.
+The final actuators are chosen to be the the first values. It is implemented between lines `225-227` of `MPC.cpp`.
 
 The objective function turned out to be quite tricky. I tried to throw in some of my ideas (the steeper the car
 is turning, the slower it should go, penalizing the desired velocity if the car is turning steep, etc...) but those

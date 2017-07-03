@@ -6,7 +6,7 @@ using CppAD::AD;
 
 size_t N = 10;
 double dt = 0.1;
-double ref_v = 35;
+double ref_v = 80 * 0.44704;
 
 size_t x_start = 0;
 size_t y_start = x_start + N;
@@ -44,21 +44,21 @@ public:
     // Cost function
     // The part of the cost based on the reference state.
     for (int t = 0; t < N; t++) {
-      fg[0] += 10 * CppAD::pow(vars[cte_start + t], 2);
-      fg[0] += CppAD::pow(vars[epsi_start + t], 2);
+      fg[0] += 100 * CppAD::pow(vars[cte_start + t], 2);
+      fg[0] += 10 * CppAD::pow(vars[epsi_start + t], 2);
       fg[0] += CppAD::pow(vars[v_start + t] - ref_v, 2);
     }
 
     // Minimize the use of actuators.
     for (int t = 0; t < N - 1; t++) {
-      fg[0] += CppAD::pow(vars[delta_start + t], 2);
-      fg[0] += 10 * CppAD::pow(vars[a_start + t], 2);
+      fg[0] += 30000 * CppAD::pow(vars[delta_start + t], 2);
+      fg[0] += 20 * CppAD::pow(vars[a_start + t], 2);
     }
 
     // Minimize the value gap between sequential actuations.
     for (int t = 0; t < N - 2; t++) {
-      fg[0] += CppAD::pow(vars[delta_start + t + 1] - vars[delta_start + t], 2);
-      fg[0] += CppAD::pow(vars[a_start + t + 1] - vars[a_start + t], 2);
+      fg[0] += 2000 * CppAD::pow(vars[delta_start + t + 1] - vars[delta_start + t], 2);
+      fg[0] += 0.01 * CppAD::pow(vars[a_start + t + 1] - vars[a_start + t], 2);
     }
 
     // the constraints
@@ -223,14 +223,8 @@ vector<double> MPC::Solve(Eigen::VectorXd state, Eigen::VectorXd coeffs) {
   // {...} is shorthand for creating a vector, so auto x1 = {1.0,2.0}
   // creates a 2 element double vector.
   vector<double> result;
-  const int avg_steps = min(3, (int) N - 1);
-  double delta = 0, alpha = 0;
-  for (i = 0; i < avg_steps; ++i) {
-    delta += solution.x[delta_start + i];
-    alpha += solution.x[a_start + i];
-  }
-  result.push_back(delta / avg_steps);
-  result.push_back(alpha / avg_steps);
+  result.push_back(solution.x[delta_start]);
+  result.push_back(solution.x[a_start]);
   // predicted x and y coordinates
   for (i = 0; i < N; ++i) {
     result.push_back(solution.x[x_start + i]);
